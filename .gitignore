@@ -1,0 +1,11 @@
+/node_modules/
+/.git/
+/**/_backstage
+/**/package-lock.json
+/**/Thumbs.db
+/**/*.DS_Store
+node_modules
+.sass-cache
+**/.sass-cache
+**/.sass-cache/*
+**.sass-cache**
