@@ -16,19 +16,20 @@ function DOMready() {
 	var scrollDirection;
 
 	calcLeftBorder($activeSection);
+	$activeSection.addClass('real-active');
 
 	$(document).ready(function () {
 		$('#sections-container').fullpage({
 			licenseKey: "OPEN-SOURCE-GPLV3-LICENSE",
 			autoScrolling: true,
 			navigation: true,
-			normalScrollElements: '.scrollable, .about-abilities__list-c.scroll-content.scroll-scrolly_visible, .scroll-wrapper.about-abilities__list-c.about-abilities__list-c_shadow',
+			normalScrollElements: '.about-abilities__list-c.scroll-content.scroll-scrolly_visible, .scroll-wrapper.about-abilities__list-c.about-abilities__list-c_shadow',
 			responsiveWidth: 1365,
 
 			onLeave: function (origin, destination, direction) {
 				var $activeTab = $('.h-section').eq(destination.index);
 
-				if ( window.matchMedia("(min-width : 768px)").matches ){
+				if ( window.matchMedia("(min-width : 1366px)").matches ){
 					changeActiveUIColors($activeTab);
 					changeCurrentClass($activeTab);
 				}
@@ -42,9 +43,6 @@ function DOMready() {
 				
 				if (window.matchMedia("(min-width : 1366px)").matches) {
 					cardAlignment();
-				}
-
-				if ( window.matchMedia("(min-width : 768px)").matches ){
 					calcLeftBorder($activeTab);
 					changeActiveUIColors($activeTab);
 					changeCurrentClass($activeTab);
@@ -70,22 +68,57 @@ function DOMready() {
 	});
 
 	// change UI colors only on mobile free scroll
-	if (window.matchMedia("(max-width : 767px)").matches) {
+	if (window.matchMedia("(max-width : 1365px)").matches) {
 		var $sections = $('#sections-container .h-section');
 
+		//change general UI colors
 		$(window).on('scroll', function () {
+			var headerH = 60;
 			var cur_pos = $(this).scrollTop();
+			var cur_pos_wOffset = cur_pos + headerH;
+
+			//offset for tablet about page, for titles changes
+			if (window.matchMedia("(min-width : 768px)").matches && $(['[data-id^=about]']).length){
+				var $activeSection = $('.h-section.real-active');
+				var $aboutInfo = $activeSection.find('.h-section__info_about');
+				var infoH = $aboutInfo.outerHeight(true);
+
+				cur_pos_wOffset = cur_pos + infoH + headerH;
+			}
 
 			$sections.each(function () {
 				var $this = $(this);
-				var headerH = 60;
-				var top = $this.offset().top - headerH;
+				var top = $this.offset().top;
 				var bottom = top + $this.outerHeight();
-
-				if (cur_pos >= top && cur_pos <= bottom) {
+				
+				if (cur_pos_wOffset + headerH >= top && cur_pos_wOffset <= bottom) {
 					changeActiveUIColors($this);
 					changeCurrentClass($this);
+
 					return false;
+				}
+			});
+		});
+
+		//change footer UI colors
+		$(window).on('scroll', function () {
+			var footer_pos = $('.sections-structure .sections-structure__bot').offset().top;
+
+			$sections.each(function () {
+				var $this = $(this);
+				var offset = 10;
+				var ofssetForShadow = 100;
+				var top = $this.offset().top;
+				var topWithF= $this.offset().top + offset;
+				var bottom = top + $this.outerHeight();
+
+				if (footer_pos >= topWithF && footer_pos <= bottom) {
+					var allowDoShadow = (footer_pos >= topWithF + ofssetForShadow);
+					
+					changeFooterUIColors($this);
+					changeCurrentBotClass($this);
+
+					allowUseShadow($this, allowDoShadow);
 				}
 			});
 		});
@@ -97,11 +130,19 @@ function DOMready() {
 		var $nav = $('#fp-nav');
 
 		var uiColor = $tab.data('ui-color');
-		var navColor = $tab.data('nav-color')
+		var navColor = $tab.data('nav-color');
 
 		$container.removeClass('sections-structure_ui-white sections-structure_ui-gray').addClass('sections-structure_ui-' + uiColor);
 
 		$nav.removeClass('onepage-pagination_white onepage-pagination_blue').addClass('onepage-pagination_' + navColor);
+	};
+
+	function changeFooterUIColors(tab) {
+		var $footer = $('.sections-structure .sections-structure__bot');
+		var $tab = tab;
+		var uiColor = $tab.data('ui-color');
+
+		$footer.removeClass('sections-structure__bot_ui-white sections-structure__bot_ui-gray').addClass('sections-structure__bot_ui-' + uiColor);
 	};
 
 	function calcLeftBorder($activeTab) {
@@ -132,9 +173,30 @@ function DOMready() {
 	function changeCurrentClass($activeTab) {
 		var $structure = $('.sections-structure');
 		var $tab = $activeTab;
+		var tabID = $tab.data('id');
+		var $allSections = $('.h-section');
+
+		$allSections.removeClass('real-active');
+		$structure.attr('data-current', tabID);
+		$('[data-id=' + tabID + ']').addClass('real-active');
+	};
+
+	function changeCurrentBotClass(tab) {
+		var $footer = $('.sections-structure .sections-structure__bot');
+		var $tab = tab;
 		var $tabID = $tab.data('id');
 
-		$structure.attr('data-current', $tabID);
+		$footer.attr('data-current-bot', $tabID);
+	};
+
+	function allowUseShadow(tab, allow){
+		var $footer = $('.sections-structure .sections-structure__bot');
+		
+		if (allow){
+			$footer.addClass('canUseShadow');
+		} else {
+			$footer.removeClass('canUseShadow');
+		}
 	};
 
 	//
@@ -207,17 +269,18 @@ function DOMready() {
 		}, 400));
 	});
 
-	//prevent slide scrolling on scrollables divs
-	$(document).on('mouseenter', '.scrollable, .about-abilities__list-c.scroll-content.scroll-scrolly_visible, .scroll-wrapper.about-abilities__list-c.about-abilities__list-c_shadow', function(e) {
+	//prevent slide scrolling on scrollables divs \\.scrollable be here too\\
+	$(document).on('mouseenter', '.about-abilities__list-c.scroll-content.scroll-scrolly_visible, .scroll-wrapper.about-abilities__list-c.about-abilities__list-c_shadow', function(e) {
 		fullpage_api.setAllowScrolling(false);
 	});
 
-	$(document).on('mouseleave', '.scrollable, .about-abilities__list-c.scroll-content.scroll-scrolly_visible, .scroll-wrapper.about-abilities__list-c.about-abilities__list-c_shadow', function(e) {
+	$(document).on('mouseleave', '.about-abilities__list-c.scroll-content.scroll-scrolly_visible, .scroll-wrapper.about-abilities__list-c.about-abilities__list-c_shadow', function(e) {
 		fullpage_api.setAllowScrolling(true);
 	});
 
 	//change scide after scroll scrollable elems
 	function changeSlidesWithScrolls($scrollable) {
+		return;
 		if (!$scrollable.length || !isSlideCanChange || window.matchMedia("(max-width : 767px)").matches) return;
 
 		var height = $scrollable.outerHeight();
@@ -473,7 +536,8 @@ function DOMready() {
 			$body.removeClass('body-overflow').css('top', 0);
 
 			if ( scrollMargin ) {
-				document.scrollingElement.scrollTop = htmlScroll;
+				var bodyScroll = document.scrollingElement || document.documentElement;
+				bodyScroll.scrollTop = htmlScroll;
 				scrollMargin = 0;
 			}
 		} else {
@@ -486,8 +550,11 @@ function DOMready() {
 		$menuToggler.toggleClass('active');
 		$menu.toggleClass('active');
 		$structure.toggleClass('menu-is-opened');
-		$.fn.fullpage.setMouseWheelScrolling(isOpened);
-		$.fn.fullpage.setAllowScrolling(isOpened);
+
+		if ($.fn.fullpage.version) {
+			$.fn.fullpage.setMouseWheelScrolling(isOpened);
+			$.fn.fullpage.setAllowScrolling(isOpened);
+		}
 	};
 
 	function getBodyScrollTop () { 
@@ -596,18 +663,9 @@ function DOMready() {
 		});
 	}	
 
-	// if (window.matchMedia("(max-width : 1365px)").matches) {
-	// 	$('.h-section-about__col-r').scrollbar({
-	// 		onInit : function() {
-	// 			var $this = this.container;
-	// 			var $parent = $this.parent();
-
-	// 			if ($this.hasClass('scrollable')){
-	// 				$parent.removeClass('scrollable');
-	// 			};
-	// 		}
-	// 	});
-	// }
+	if (window.matchMedia("(max-width : 1365px)").matches) {
+		$('.h-section__info_practices').scrollbar();
+	}
 
 	//
 	// custom scrollbar ... end;
@@ -710,6 +768,26 @@ function DOMready() {
 
 	//
 	// home page slide 3 cards alignments ... end;
+	//
+
+	//
+	// stick divs
+	//
+	
+	if (window.matchMedia("(max-width : 1365px)").matches && window.matchMedia("(min-width : 768px)").matches) {
+		$(".h-section-team__row-5-in").stick_in_parent();
+	}
+
+	$(window).on('load', function(){
+		if (window.matchMedia("(max-width : 1365px)").matches && window.matchMedia("(min-width : 768px)").matches) {
+			$(".h-section-team__row-5-in").trigger("sticky_kit:recalc");
+			$('.h-section__info_about').trigger("sticky_kit:recalc");
+		}
+	});
+
+
+	//
+	// stick divs ... end;
 	//
 }
 
